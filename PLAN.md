@@ -17,7 +17,7 @@ macOS/Windows 개인 클라이언트 ──HTTPS──> 공개 게이트웨이 �
 ### 0. 기준선과 안전한 병행 개발
 
 - [x] v0.5.0 릴리즈 태그를 현재 커밋에 고정.
-- [x] 별도 `/Users/munki/project/nastack-agent2` 아래 `server-app/`, `client-app/`, `gateway-app/` 및 경계 문서 생성.
+- [x] 별도 `/Users/munki/project/nastack-trading2` 아래 `server-app/`, `client-app/`, `gateway-app/` 및 경계 문서 생성.
 - [x] 개발용 운영 서버 Compose를 `8082` 및 별도 프로젝트·DB 볼륨으로 정의.
 - [x] 개발 전용 비밀 설정 생성 도구를 추가하고 기존 설치 설정과 분리되는지 단위 테스트.
 - [x] v0.5.0 서버 코드·마이그레이션·웹 자산·빌드 파일·테스트를 `server-app/`으로 복사해 독립 빌드 경계 마련.
