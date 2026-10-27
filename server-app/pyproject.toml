@@ -1,0 +1,39 @@
+[project]
+name = "nastack-trading"
+version = "0.2.0"
+description = "NaStack Trading control API and durable research worker"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.30,<1",
+  "sqlalchemy>=2.0,<3",
+  "alembic>=1.13,<2",
+  "psycopg[binary]>=3.2,<4",
+  "pydantic-settings>=2.5,<3",
+  "email-validator>=2.2,<3",
+  "tzdata>=2025.2",
+  "httpx>=0.28,<1",
+  "cryptography>=44,<47",
+  "holidays>=0.80,<1",
+  "exchange-calendars>=4.13.1,<5",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "httpx>=0.28,<1", "ruff>=0.9,<1", "playwright>=1.56,<2"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nastack_trading"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

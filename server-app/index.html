@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a1020" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/live.css?v=20261027-trade-outline-cards" />
+    <link rel="stylesheet" href="/mobile.css?v=20261027-trade-six-columns" />
+    <title>NaStack Trading</title>
+  </head>
+  <body>
+    <section class="login-gate" id="loginGate">
+      <form class="panel login-panel" id="loginForm">
+        <p class="eyebrow">NASTACK TRADING</p><h1>로그인</h1>
+        <p class="helper">이메일로 인증 코드를 받은 뒤 입력하세요. 세션이 유효하면 자동 로그인됩니다.</p>
+        <label>이메일<input id="loginEmail" type="email" autocomplete="username" required /></label>
+        <label class="remember-email"><input id="rememberEmail" type="checkbox" />이메일 기억하기</label>
+        <p class="helper" id="rememberEmailMessage" role="status">이메일은 이 브라우저에도 기억하고 설정은 DB에 저장합니다. 접근 코드는 저장하지 않습니다. 공용 기기에서는 해제하세요.</p>
+        <button class="primary" type="button" id="requestLoginCode">인증 코드 보내기</button>
+        <div id="codeStep" hidden>
+        <label>이메일 인증 코드<input id="loginCode" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" required disabled /></label>
+        <p class="helper">관리자가 부여한 세션 시간 동안 자동 로그인됩니다(기본 24시간). 접근 코드 원문은 저장하지 않습니다.</p>
+        <button class="primary" type="submit" id="loginSubmit">코드 확인·로그인</button>
+        <button class="secondary" type="button" id="changeLoginEmail">이메일 변경</button>
+        </div>
+        <p class="form-message" id="loginMessage" role="status"></p>
+      </form>
+    </section>
+    <main class="app-shell" id="appShell" hidden>
+      <aside class="rail left-rail" id="leftRail" aria-label="주요 메뉴">
+        <div class="brand"><span class="brand-mark">N</span><span>NaStack</span><small>TRADING</small></div>
+        <button class="secondary mobile-close" data-toggle="leftRail" aria-label="메뉴 닫기">메뉴 닫기</button>
+        <div class="account-card"><span class="eyebrow">매매 안내</span><strong><i class="status-dot neutral"></i> 계좌별 주문 관리</strong><small>실제 주문은 최종 확인 후 전송</small></div>
+        <nav class="nav-list" aria-label="화면 메뉴">
+          <button class="nav-item active" data-view="dashboard">대시보드</button>
+          <button class="nav-item" data-view="holdings">보유종목</button>
+          <button class="nav-item" data-view="watchlist">관심종목</button>
+          <button class="nav-item" data-view="recommendations">추천종목</button>
+          <button class="nav-item" data-view="data">데이터 수집</button>
+          <button class="nav-item" data-view="analysis">종목분석</button>
+          <button class="nav-item" data-view="orders">종목 매매</button>
+          <button class="nav-item" data-view="reports">분석 리포트</button>
+          <button class="nav-item" data-view="logs">시스템 로그</button>
+        </nav>
+        <div class="rail-bottom">
+          <button class="nav-item" data-view="settings">설정</button>
+          <button class="nav-item" data-view="users" id="usersNav" hidden>관리자 설정</button>
+          <p class="muted" id="userIdentity"></p>
+          <p class="helper" id="sessionStatus" role="status"></p>
+          <button class="secondary" id="logoutButton">로그아웃</button>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <button class="icon-button rail-control" data-toggle="leftRail" aria-label="메뉴 접기">☰</button>
+          <div><p class="eyebrow" id="systemClock">Asia/Seoul</p><h1 id="pageTitle">작업 대시보드</h1></div>
+          <div class="top-actions"><button class="icon-button" data-toggle="rightRail" aria-label="상세 패널 접기/펼치기">⚙</button></div>
+        </header>
+
+        <div class="workspace-body">
+          <section class="content" id="liveContent" aria-live="polite"></section>
+          <section class="content" id="contentArea" hidden>
+            <div class="notice"><i class="status-dot success"></i><span>자동 분석이 다음 실행을 준비했습니다.</span><time>09:35:00 KST</time></div>
+            <section class="metric-grid" aria-label="계좌 요약">
+              <article class="metric-card"><span>총 평가금액</span><strong>₩ 24,850,000</strong><small class="positive">+ ₩ 285,000 (1.16%)</small></article>
+              <article class="metric-card"><span>오늘 손익</span><strong class="positive">+ ₩ 128,400</strong><small>일일 손실 한도까지 91.4%</small></article>
+              <article class="metric-card"><span>가용 주문금액</span><strong>₩ 8,120,000</strong><small>예약 금액 ₩ 0</small></article>
+              <article class="metric-card"><span>활성 신호</span><strong>4건</strong><small class="warning">2건은 14분 후 만료</small></article>
+            </section>
+
+            <section class="panel chart-panel">
+              <div class="panel-header"><div><p class="eyebrow">KOSPI · 1D</p><h2>시장 추이</h2></div><div class="segmented"><button class="selected">1일</button><button>1주</button><button>1개월</button></div></div>
+              <div class="chart" role="img" aria-label="상승 추세의 시장 차트"><span class="chart-label high">2,658.42</span><svg viewBox="0 0 700 190" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#31d497" stop-opacity=".36"/><stop offset="1" stop-color="#31d497" stop-opacity="0"/></linearGradient></defs><path class="grid" d="M0 25H700M0 80H700M0 135H700M0 185H700"/><path class="area" d="M0 155 L40 148 L80 157 L120 124 L160 132 L200 108 L240 120 L280 80 L320 104 L360 65 L400 90 L440 67 L480 72 L520 38 L560 57 L600 34 L640 45 L700 12 V190 H0Z"/><path class="line" d="M0 155 L40 148 L80 157 L120 124 L160 132 L200 108 L240 120 L280 80 L320 104 L360 65 L400 90 L440 67 L480 72 L520 38 L560 57 L600 34 L640 45 L700 12"/></svg><span class="chart-label low">2,612.73</span></div>
+              <div class="chart-foot"><span>09:00</span><span>11:00</span><span>13:00</span><span>15:30</span></div>
+            </section>
+
+            <section class="split-grid">
+              <details class="panel" open><summary><span><p class="eyebrow">RECOMMENDATIONS</p><h2>추천 종목</h2></span><span class="summary-count">4개</span></summary><div class="table-wrap"><table><thead><tr><th>종목</th><th>현재가</th><th>변동</th><th>신호</th><th>신뢰도</th></tr></thead><tbody><tr><td><strong>삼성전자</strong><small>005930</small></td><td>₩ 73,400</td><td class="positive">+1.52%</td><td><span class="tag buy">매수 후보</span></td><td>82%</td></tr><tr><td><strong>SK하이닉스</strong><small>000660</small></td><td>₩ 198,200</td><td class="positive">+2.31%</td><td><span class="tag buy">매수 후보</span></td><td>77%</td></tr><tr><td><strong>현대차</strong><small>005380</small></td><td>₩ 245,000</td><td class="negative">-0.41%</td><td><span class="tag hold">관찰</span></td><td>69%</td></tr></tbody></table></div><div class="pagination"><button disabled>‹</button><button class="current">1</button><button>2</button><button>›</button></div></details>
+              <details class="panel" open><summary><span><p class="eyebrow">AUTOMATION</p><h2>분석 작업</h2></span><span class="summary-count running">실행 중</span></summary><ul class="job-list"><li><span class="spinner"></span><div><strong>실시간 뉴스 분석</strong><small>12개 소스 수집 및 분류 중</small></div><time>진행 68%</time></li><li><i class="status-dot success"></i><div><strong>포트폴리오 재평가</strong><small>정책 v0.1 · 완료</small></div><time>09:31</time></li><li><i class="status-dot neutral"></i><div><strong>차트 신호 계산</strong><small>다음 실행: 09:40</small></div><time>대기</time></li></ul></details>
+            </section>
+          </section>
+
+          <aside class="rail right-rail" id="rightRail" aria-label="상세 정보">
+            <div id="liveInspector"></div>
+            <div hidden>
+            <div class="right-head"><div><p class="eyebrow">DETAILS</p><h2>대시보드 설정</h2></div><button class="icon-button rail-control" data-toggle="rightRail" aria-label="상세 설정 접기">›</button></div>
+            <details class="settings-group" open><summary>표시 옵션</summary><label><span>기준 계좌</span><select><option>Paper 계좌</option></select></label><label><span>기본 기간</span><select><option>당일</option><option>1주일</option><option>1개월</option></select></label></details>
+            <details class="settings-group" open><summary>자동 분석 주기</summary><label><span>시장 동향</span><select><option>5분마다</option><option>15분마다</option></select></label><label><span>뉴스 분석</span><select><option>15분마다</option><option>30분마다</option></select></label><p class="helper">변경 내용은 저장 후 다음 작업부터 적용됩니다.</p></details>
+            <details class="settings-group"><summary>위험 정책</summary><p class="helper">실거래 활성화 전에는 읽기 전용입니다.</p><button class="secondary full">정책 보기</button></details>
+            <details class="settings-group"><summary>이 화면 정보</summary><p class="helper">긴 작업은 버튼·목록에서 진행 상태를 보여주며, 완료 또는 실패 시 알림과 로그를 남깁니다.</p></details>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="/live-quotes.js?v=20261026-namuh-shared-reads"></script>
+    <script src="/auto-trade-ui.js?v=20261027-trade-price-boxes"></script>
+    <script src="/trade-journal-ui.js?v=20261027-trade-price-boxes"></script>
+    <script src="/trade-ui.js?v=20261027-trade-outline-cards"></script>
+    <script src="/reports-ui.js?v=20261024-reports"></script>
+    <script src="/llm-settings-ui.js?v=20261027-llm-usage-session-timer"></script>
+    <script src="/screen-help.js?v=20261026-movers-auto-detail"></script>
+    <script src="/collection-ui.js?v=20261027-llm-usage-session-timer"></script>
+    <script src="/data-collection-ui.js?v=20261027-llm-usage-session-timer"></script>
+    <script src="/recommendations-ui.js?v=20261026-watchlist-actions"></script>
+    <script src="/app.js?v=20261027-llm-usage-session-timer"></script>
+  </body>
+</html>

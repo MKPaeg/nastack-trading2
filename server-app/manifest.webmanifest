@@ -1,0 +1,9 @@
+{
+  "name": "NaStack Trading",
+  "short_name": "NaStack",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1020",
+  "theme_color": "#0a1020",
+  "lang": "ko"
+}

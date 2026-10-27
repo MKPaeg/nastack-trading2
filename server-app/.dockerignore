@@ -1,0 +1,12 @@
+**
+!pyproject.toml
+!uv.lock
+!src/
+!src/**
+!alembic.ini
+!migrations/
+!migrations/**
+!index.html
+!*.js
+!*.css
+!manifest.webmanifest
