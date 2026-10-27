@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import secrets
 from contextlib import asynccontextmanager
 from datetime import timedelta
@@ -25,6 +26,7 @@ from .jobs import ACTIVE, log, run_view
 from .kiwoom import kiwoom_router
 from .live_worker import LiveWorker
 from .llm_tasks import prompt_snapshot, task_policy, tasks_router
+from .llm_usage_history import llm_usage_router
 from .mail import send_login_code
 from .market import market_router
 from .models import (
@@ -44,9 +46,9 @@ from .models import (
     UserSettings,
 )
 from .news import news_router
+from .opendart import opendart_router
 from .paper import paper_router
 from .personal_connections import connections_router
-from .opendart import opendart_router
 from .portfolio import portfolio_router
 from .realized_sales import realized_router
 from .recommendations import recommendations_router
@@ -164,13 +166,30 @@ def create_app(
             lan_allowed = config.development_lan_same_origin and private_same_origin(origin, request.url)
             if origin not in config.allowed_origins and not lan_allowed:
                 return Response("허용되지 않은 요청 출처", status_code=403)
-        from .llm_usage import usage_scope, usage_snapshot
         import json
 
-        with usage_scope() as ledger:
+        from .llm_usage import usage_scope, usage_snapshot
+        from .llm_usage_history import save_usage
+
+        category = "collection" if request.url.path.startswith(("/api/news/collect", "/api/business-research")) else "evaluation"
+        with usage_scope(category) as ledger:
             response = await call_next(request)
             if request.method == "POST":
-                response.headers["X-LLM-Usage"] = json.dumps(usage_snapshot(ledger), separators=(",", ":"))
+                snapshot = await asyncio.to_thread(usage_snapshot, ledger) if ledger else usage_snapshot(ledger)
+                response.headers["X-LLM-Usage"] = json.dumps(snapshot, separators=(",", ":"))
+            if ledger:
+                owner_id = getattr(request.state, "llm_owner_id", None)
+                tenant_id = getattr(request.state, "llm_tenant_id", None)
+                if not owner_id:
+                    with factory() as db:
+                        current = session_user(db, request.cookies.get(COOKIE))
+                        if current:
+                            owner_id, tenant_id = current.id, current.tenant_id
+                if owner_id and tenant_id:
+                    try:
+                        await asyncio.to_thread(save_usage, factory, owner_id, tenant_id, ledger)
+                    except Exception:
+                        logging.getLogger(__name__).warning("LLM usage history could not be saved")
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "same-origin"
         response.headers["X-Frame-Options"] = "DENY"
@@ -201,6 +220,8 @@ def create_app(
                     db.commit()
         if not user:
             raise HTTPException(401, "로그인이 필요합니다.")
+        request.state.llm_owner_id = user.id
+        request.state.llm_tenant_id = user.tenant_id
         return user
 
     def administrator(user=Depends(current_user)):
@@ -269,6 +290,7 @@ def create_app(
     app.include_router(news_router(current_user, db_session, config, news_transport))
     app.include_router(collection_router(current_user, db_session, factory, config, news_transport))
     app.include_router(statistics_router(current_user, db_session, config, news_transport))
+    app.include_router(llm_usage_router(current_user, db_session))
     app.include_router(data_collection_router(current_user, db_session))
 
     @app.get("/api/health")

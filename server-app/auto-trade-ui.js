@@ -45,8 +45,9 @@ function appendAutomaticControls(action,plan,metadata,reload,message,readSetting
     dialog.append(node("h3",`${plan.name} · 입력된 자동매매 조건 확인`),
       node("p",`${plan.broker==="namuh"?"나무증권":"영웅문"} · 계좌 끝자리 ${plan.account_last4||"API 연결 계좌"}`),
       node("p",`매매 비중 ${entered.fraction}% · 신규 매수수량 ${entered.auto_max_quantity?priceText(entered.auto_max_quantity,"주"):"별도 제한 없음 · 비중 적용"} · 목표수익 ${entered.take_profit}% 이상`),
-      node("p",entered.buy_enabled===false?"매수 사용 안 함 · 기존 보유분의 익절·손절만 감시":entered.buy_condition==="at_or_above"?`미보유 시 현재가 ${priceText(entered.buy_price)} 이상이면 시장가 매수 · 실제 체결가는 기준가격보다 높을 수 있으며 가격 상한이 없습니다.`:`미보유 시 현재가 ${priceText(entered.buy_price)} 이하에서 지정가 매수`),
-      node("p","보유 중에는 자동 추가매수하지 않습니다. 추가매수·일부매도는 버튼으로 별도 승인합니다. 증권사 평균매입가를 기준으로 켜진 익절·손절 조건을 감시하고, 자동 매도 시 남은 보유분 전량을 매도합니다.","warning"),
+      node("p",entered.buy_enabled===false?"매수 사용 안 함 · 기존 보유분의 익절·손절만 감시":entered.buy_condition==="at_or_above"?`현재가 ${priceText(entered.buy_price)} 이상이면 시장가 매수 · 실제 체결가는 기준가격보다 높을 수 있으며 가격 상한이 없습니다.`:`현재가 ${priceText(entered.buy_price)} 이하에서 지정가 매수`),
+      node("p",scheduled?"예약은 기존 보유분에 자동 추가매수하지 않습니다. 보유분의 익절·손절은 계속 감시합니다.":plan.active?"이미 활성 상태인 설정을 다시 시작해도 기존 보유분에 자동 추가매수하지 않습니다.":"정지 상태에서 새로 시작하면 '매수 사용'이 켜진 보유종목도 가격 조건 충족 시 자동 추가매수합니다. 전체 일시정지 후 재개하면 보유종목 자동 추가매수는 취소됩니다.","warning"),
+      node("p","보유분의 익절·손절 조건은 매수보다 우선합니다. 자동 매도 시 남은 보유분 전량을 매도합니다. 수동 추가매수·일부매도는 별도 승인합니다.","warning"),
       node("p","자동 매도 완료 또는 일부매도 버튼으로 전량 청산하면 자동 정지합니다. 반복매매는 하지 않습니다. 자동 매도에는 공통 수량·비중 상한을 적용하지 않습니다.","warning"),
       node("p",`실제 주문이 전송될 수 있습니다. ${scheduled?"예약 시간 이후 감시합니다.":"시작 직후 감시합니다."} 신규주문 차단은 자동·추가 주문 모두 차단합니다. 전체 자동매매 일시정지는 자동 주문만 대기시키며, 개별 승인하는 추가매수·일부매도는 별개입니다. 브라우저를 닫아도 서버 워커는 계속 동작합니다.` ,"warning"));
     if(scheduled)dialog.append(label);

@@ -145,6 +145,8 @@ def test_adjustment_ui_explicit_confirmation_restore_and_viewer_isolation(setup,
             expect(row.get_by_role("group", name="자동 손절", exact=True).get_by_label("보존 종목 손절 사용", exact=True)).to_be_visible()
             condition = auto_buy.get_by_label("보존 종목 자동매수 가격 조건", exact=True)
             expect(condition).to_have_value("at_or_below")
+            assert condition.locator("option").all_text_contents() == ["설정가 이하 · 지정가", "설정가 이상 · 시장가"]
+            assert condition.evaluate("el => el.getBoundingClientRect().right <= el.parentElement.getBoundingClientRect().right + 1")
             with page.expect_response(lambda r: r.request.method == "PATCH" and r.url.endswith("/settings")) as saved_condition:
                 condition.select_option("at_or_above")
             assert saved_condition.value.status == 200

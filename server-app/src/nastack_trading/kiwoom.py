@@ -138,16 +138,16 @@ class KiwoomReader:
                 502, "키움 연결 또는 응답 검증에 실패했습니다. 기존 자료는 유지합니다."
             ) from None
 
-    def token(self, db, user):
+    def token(self, db, user, *, force=False):
         from .user_brokers import personal_config
 
         scoped = personal_config(db, user, self.config, "kiwoom")
         if scoped is not self.config:
             reader = KiwoomReader(scoped, self.transport)
-            return reader._token(db, user)
-        return self._token(db, user)
+            return reader._token(db, user, force=force)
+        return self._token(db, user, force=force)
 
-    def _token(self, db, user):
+    def _token(self, db, user, *, force=False):
         self.owner(db, user)
         connection = db.scalar(
             select(KiwoomConnection)
@@ -160,6 +160,8 @@ class KiwoomReader:
             raise HTTPException(409, "서버의 키움 키·소유자·암호화 설정이 누락되었습니다.")
         scope = self.scope(connection.environment)
         if (
+            not force
+            and
             connection.token_ciphertext
             and connection.token_scope == scope
             and connection.token_expires_at
@@ -206,8 +208,9 @@ class KiwoomReader:
             return token, connection.environment
         except (HTTPException, ValueError, TypeError):
             connection.last_error = "AUTH_FAILED"
-            connection.token_ciphertext = None
-            connection.token_expires_at = None
+            if not force or not connection.token_expires_at or aware(connection.token_expires_at) <= now():
+                connection.token_ciphertext = None
+                connection.token_expires_at = None
             audit(db, user, "kiwoom.auth_failed", user.id, {"environment": connection.environment})
             db.commit()
             raise HTTPException(

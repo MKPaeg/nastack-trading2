@@ -25,14 +25,20 @@ async function renderDataCollection(){
   const owner=state.user.id,area=$("#liveContent");area.replaceChildren();
   const valid=()=>state.user?.id===owner&&state.view==="data";
   const tabs=node("div",undefined,"admin-tabs"),body=node("div");area.append(tabs,body);
-  const choices=[["status","갱신 상태·비용 한도"],["dimensions","다차원 데이터"],["news","뉴스·공시 수집 계획"],["statistics","통계 데이터"]];
+  const choices=[["status","갱신 상태·비용 한도"],["dimensions","다차원 데이터"],["news","뉴스·공시 수집 계획"],["business","사업 설명 재조사"],["statistics","통계 데이터"]];
   async function show(key){
     state.dataCollectionTab=key;
     persistScreenState();
+    updateScreenHelp();
     $("#liveInspector").replaceChildren();
     body.replaceChildren();for(const b of tabs.children)b.setAttribute("aria-selected",String(b.dataset.tab===key));
     if(key==="dimensions")return renderDimensionData(body);
     if(key==="statistics")return renderStatistics(body);
+    if(key==="business"){
+      const catalog=await api("/user/llm-tasks");
+      if(valid()&&state.dataCollectionTab===key)await renderBusinessResearch(body,catalog);
+      return;
+    }
     if(key==="news"){
       const p=panel("뉴스·공시 수집 · 영향 평가는 종목 분석에서 별도 실행");body.append(p);
       p.append(node("p","백그라운드는 저장된 계획만 실행하며 LLM을 호출하지 않습니다. 새 종목·사업설명·출처 정책이 바뀌면 여기서 계획을 명시적으로 갱신하세요. 수집한 원문은 계정 내에서 재사용하고 영향 평가는 종목별로 분리합니다.","helper"));
@@ -106,5 +112,5 @@ async function renderDataCollection(){
     if(!data.resources.length)p.append(node("p","저장 자료가 없습니다. 다차원·통계 탭에서 필요한 항목만 최초 수집하고, 뉴스 탭에서 종목별 계획을 준비하세요.","warning"));
   }
   for(const [key,label]of choices){const b=node("button",label,"admin-tab");b.dataset.tab=key;b.setAttribute("role","tab");b.addEventListener("click",()=>buttonTask(b,`${label} 조회 중…`,()=>show(key)).catch(reportError));tabs.append(b);}
-  await show(["status","dimensions","news","statistics"].includes(state.dataCollectionTab)?state.dataCollectionTab:"status");
+  await show(["status","dimensions","news","business","statistics"].includes(state.dataCollectionTab)?state.dataCollectionTab:"status");
 }

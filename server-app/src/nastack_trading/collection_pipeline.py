@@ -18,7 +18,7 @@ from .collection_search import VERSION as SEARCH_VERSION
 from .collection_search import retrieve
 from .db import aware, now
 from .llm_tasks import prompt_snapshot, task_policy
-from .llm_usage import tracked_usage, usage_snapshot
+from .llm_usage import tracked_usage, usage_category, usage_snapshot
 from .models import CollectionWorkflow, NewsArticle, PersonalSource, StatisticSeries, User, UserSettings
 from .news import (
     KST,
@@ -598,7 +598,8 @@ def execute(factory, config, owner_id, tenant_id, code, token, confirmed, transp
                 if mode == "collect":
                     value["collection_usage"] = {"known": False, "total_tokens": None, "llm_calls": 1}
                     data["collection_usage"] = value["collection_usage"]
-                plan = make_plan(data, transport)
+                with usage_category("collection"):
+                    plan = make_plan(data, transport)
                 checkpoint("계획 저장")
                 value.update(
                     plan=plan,
@@ -784,15 +785,16 @@ def execute(factory, config, owner_id, tenant_id, code, token, confirmed, transp
                             ensure_ascii=False,
                         ),
                     }
-                    result = evaluate(
-                        data["config"],
-                        [article],
-                        [{"id": "stock-" + code, "name": data["instrument"]["name"], "family": "stock"}],
-                        transport,
-                        data["news_model"],
-                        data["instrument"],
-                        data["policies"]["statistics_evaluation"]["text"],
-                    )
+                    with usage_category("evaluation"):
+                        result = evaluate(
+                            data["config"],
+                            [article],
+                            [{"id": "stock-" + code, "name": data["instrument"]["name"], "family": "stock"}],
+                            transport,
+                            data["news_model"],
+                            data["instrument"],
+                            data["policies"]["statistics_evaluation"]["text"],
+                        )
                     checkpoint("통계 해석 저장")
                     value["statistics_assessments"][key] = {
                         "items": result,

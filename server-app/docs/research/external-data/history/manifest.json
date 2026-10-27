@@ -1,0 +1,262 @@
+[
+  {
+    "version": "1.0.0",
+    "updated_at": "2026-10-26T23:49:09.881457+09:00",
+    "reason": "증권사 포함 외부 데이터 전체 기준 목록, 데이터 단위 평가 및 이력관리 최초 생성",
+    "files": {
+      "docs/research/external-data/history/1.0.0.md": "fee8f1e182a4e0df481c81789917f6f5cdbeb39e781a9dea43f616d060427303",
+      "docs/research/external-data/history/1.0.0.pdf": "df15ce6f7ba1ad2e6d708447185a3e0328053016d91517230fcfc914098e254e",
+      "docs/research/external-data/history/1.0.0.json": "5dba1a26df93de8267a160f85b2a0b6d8d7286ddd4530d520f9c49bf9ba6a5df"
+    }
+  },
+  {
+    "version": "1.0.1",
+    "updated_at": "2026-10-26T23:51:13.363662+09:00",
+    "reason": "정적 사업정보 27개 종목의 공개 원문 출처·검토일 부록 추가",
+    "files": {
+      "docs/research/external-data/history/1.0.1.md": "e5c0460aa26be07bdf89715e6bb63f35d0e78c85afe832348e577767183a02ad",
+      "docs/research/external-data/history/1.0.1.pdf": "80e308852681d216ba5089a735482190a33678b5351e69deb983eeeba008a8b9",
+      "docs/research/external-data/history/1.0.1.json": "66d6dcef010fa5565d5f07ac040f8d436980b065dbbe08a477eab11bc6128812"
+    }
+  },
+  {
+    "version": "1.1.0",
+    "updated_at": "2026-10-27T00:13:13.086976+09:00",
+    "reason": "미연결 26개 검토, TWSE TAIEX 원지수 연결 및 검증·변경 이력 갱신",
+    "files": {
+      "docs/research/external-data/history/1.1.0.md": "b17b3ff117cac41827e0b13d581b76feb83effcd0eeb81be09c1afa2d1848698",
+      "docs/research/external-data/history/1.1.0.pdf": "cde6c36ebefe99355b1676589517b90ace0d4ed1c0ed6bae9a0c4ef1ceff06b4",
+      "docs/research/external-data/history/1.1.0.json": "6c8d4740eb3cc34056c93193d62d5b2a57b4b8892a112cdc76363058ceb29a24"
+    }
+  },
+  {
+    "version": "1.2.0",
+    "updated_at": "2026-10-27T00:26:06.333258+09:00",
+    "reason": "신규 차원 구현 확인 표시, OpenDART 개인 키·명시적 연결 및 재무자료 제공 검사 추가",
+    "files": {
+      "docs/research/external-data/history/1.2.0.md": "a90f26d09d3c9f5687347c73b51160de36622d79b036f41d2f1e9ca0b8cb606e",
+      "docs/research/external-data/history/1.2.0.pdf": "d0fac6923ad28293d8f4e033981d4aef4ac0c2434b4893c7e8830c3a4c7f7369",
+      "docs/research/external-data/history/1.2.0.json": "a77cf01a7e80125866c8c8d6a73a810d55b9e5330fb47ab782917e6a5bac0f84"
+    }
+  },
+  {
+    "version": "1.3.0",
+    "updated_at": "2026-10-27T00:59:00.590039+09:00",
+    "reason": "미연결 차원 25개 실행표와 공개 원천 실수집·품질 점검 증거 추가; 운영 소스 전환 없음",
+    "files": {
+      "docs/research/external-data/history/1.3.0.md": "a46d361571af8a51146eb5c702d4b17ad161d12cf7be720189bca1e43359c0fd",
+      "docs/research/external-data/history/1.3.0.pdf": "0189444e343dda614e998daecd1883aef7019036dc8725349cffb683709e3b2e",
+      "docs/research/external-data/history/1.3.0.json": "36b69acb506275c166ab21dc8c645798fc8123599a22aaf8fd39153321874b76"
+    }
+  },
+  {
+    "version": "1.4.0",
+    "updated_at": "2026-10-27T01:17:10.089962+09:00",
+    "reason": "서비스별 카드 간격 표준화 및 World Bank 월간 원자료 8개 수집·조회 구현; 일별 분석 투입 차단",
+    "files": {
+      "docs/research/external-data/history/1.4.0.md": "33762d50c0e01cd76ce9fecca8533004fc4d1c6344cfdb9eaaffca39cfe4b50e",
+      "docs/research/external-data/history/1.4.0.pdf": "86f319c8a679364064b16ae531091a80d28f9467540776d463f81dd5b0c3db18",
+      "docs/research/external-data/history/1.4.0.json": "b0d974a08b88cb3c7e007bf8457d3195986c4807848fbf518320966d75ba5cd9"
+    }
+  },
+  {
+    "version": "1.5.0",
+    "updated_at": "2026-10-27T01:35:33.442760+09:00",
+    "reason": "커피 Arabica·고무 RSS3 월간 수집 추가 및 25개 구현완료 컬럼",
+    "files": {
+      "docs/research/external-data/history/1.5.0.md": "4e99ed5ebb937fa45bedeaa5049ec73a821a4ada0b73f7208159174e93307d9f",
+      "docs/research/external-data/history/1.5.0.pdf": "952b01957bc2275a9f9cc5915d8f91eb5f976d68446b2bd15e8cb08b76aae796",
+      "docs/research/external-data/history/1.5.0.json": "b5c4152935b32a225dcd7f8d9759dfaef6cde8964a66e4078ffef7b62d0b3532"
+    }
+  },
+  {
+    "version": "1.6.0",
+    "updated_at": "2026-10-27T01:49:31.647557+09:00",
+    "reason": "남은 15개 재검토·철광석 IMF 및 팜유 교체후 월간 경로 연결·13개 차단조건 표시",
+    "files": {
+      "docs/research/external-data/history/1.6.0.md": "27efebdff632e5b3cb6075c5ca2de90c723a3564b92ba6fda8c085682883b485",
+      "docs/research/external-data/history/1.6.0.pdf": "47819a3f3df987df473825cf01c5d9165fe1378ac9a0289f850df7e52e46738a",
+      "docs/research/external-data/history/1.6.0.json": "ade0932ed7a8945d30726117d1fa392f94c8ba8eefb2930226e4fc166bf2ea56"
+    }
+  },
+  {
+    "version": "1.6.1",
+    "updated_at": "2026-10-27T02:05:09.914903+09:00",
+    "reason": "KRX 개인 인증키 암호화 등록 UI 및 사용자 격리 저장 추가",
+    "files": {
+      "docs/research/external-data/history/1.6.1.md": "0ed355a77a9b59c296075235be8e3fbfa94173dc61ad0d93ce72ab9721bbb7b1",
+      "docs/research/external-data/history/1.6.1.pdf": "6abc8e365d160cd702429d7ce8b7a1bb53607a256571fbf581e8757a08bbcbb2",
+      "docs/research/external-data/history/1.6.1.json": "f5383cf4c2a1aee784814633842d3a47e34f556b18261b0671b367a03d2cc123"
+    }
+  },
+  {
+    "version": "1.7.0",
+    "updated_at": "2026-10-27T02:29:06.473452+09:00",
+    "reason": "KRX 연결 테스트와 VKOSPI 개인별 수동 수집·국가시장 표시",
+    "files": {
+      "docs/research/external-data/history/1.7.0.md": "867c7b7efb196a83a5c4981e322e600883d7a87faa8d0b177d763d044f0e04f7",
+      "docs/research/external-data/history/1.7.0.pdf": "044d3a2230d67ba8f616f1fa072683069d99482e947286d3f947d634a755d019",
+      "docs/research/external-data/history/1.7.0.json": "fecb7ea0781d1c92b3b1c48301e38604015572793d543e6c89b99e61336b6f40"
+    }
+  },
+  {
+    "version": "1.7.1",
+    "updated_at": "2026-10-27T03:20:22.219533+09:00",
+    "reason": "벡터 자동 분석과 종목 속성 확정 저장 흐름 안내·배치 개선",
+    "files": {
+      "docs/research/external-data/history/1.7.1.md": "999e445d201e8a54500387425e39920e952f618ebf92c64cf9719098e629887a",
+      "docs/research/external-data/history/1.7.1.pdf": "931ee739b183aae092cbb2d8e935051c971c3f350e4aa7556657f85534018317",
+      "docs/research/external-data/history/1.7.1.json": "b4aa2fe527f6bb3ddb802cf7d56feba623ddbc4e0d5791d74af0375461ef6591"
+    }
+  },
+  {
+    "version": "1.7.2",
+    "updated_at": "2026-10-27T03:21:13.829367+09:00",
+    "reason": "벡터 저장 흐름 최종 검증·시세 갱신 중 저장 차단",
+    "files": {
+      "docs/research/external-data/history/1.7.2.md": "1c028e4a56d010b51211c3ea25e0625af5244ec8a19f4332cd2dc2c10e1d9900",
+      "docs/research/external-data/history/1.7.2.pdf": "798ff9b31f2299d128c9ce885ff796ac7b0cc6511f1293f60ba94823aa1750cc",
+      "docs/research/external-data/history/1.7.2.json": "4b75128fe882147af8acd1d328dca997f6995d8668e09b7681a2b27e1cc80a67"
+    }
+  },
+  {
+    "version": "1.8.0",
+    "updated_at": "2026-10-27T03:35:48.019719+09:00",
+    "reason": "BLS 철강 PPI 월간 연결·사용자별 데이터 기반 차원 선택 차단",
+    "files": {
+      "docs/research/external-data/history/1.8.0.md": "dfa091c9bce08f5d019b7634f00b89aa3150c29800118ff56cf263f9969ed4b2",
+      "docs/research/external-data/history/1.8.0.pdf": "f8c28dc174d74be5107b09e239a5804f86e07769dfa60f4783824986c5e39e80",
+      "docs/research/external-data/history/1.8.0.json": "ca0ba91d2a9b24ee1e763ae6c310b9fa8abed8d7ec688d68958af0c6760797fb"
+    }
+  },
+  {
+    "version": "1.8.1",
+    "updated_at": "2026-10-27T03:55:43.749539+09:00",
+    "reason": "뉴스 기사별 검증 실패 격리·정상 묶음 계속 평가·명시적 재시도",
+    "files": {
+      "docs/research/external-data/history/1.8.1.md": "00e3a08bfb781bdc4edb21b3c49f0ad029f167d36d9899fb81467f6f7f7c3d53",
+      "docs/research/external-data/history/1.8.1.pdf": "85a7e916c11b207cbb2ce541fdf0a263a76a6bdddad28e6dde7422573d0c58ac",
+      "docs/research/external-data/history/1.8.1.json": "4b44a92a9df5fc92bc47ff746f9d62dbfb8a76f7f2ca56a25cccb5e249961036"
+    }
+  },
+  {
+    "version": "1.8.2",
+    "updated_at": "2026-10-27T04:16:25.391408+09:00",
+    "reason": "뉴스 저장 자료 평가 진행 애니메이션·경과시간 표시, 수집 정책 변경 없음",
+    "files": {
+      "docs/research/external-data/history/1.8.2.md": "00e3a08bfb781bdc4edb21b3c49f0ad029f167d36d9899fb81467f6f7f7c3d53",
+      "docs/research/external-data/history/1.8.2.pdf": "16828e9da09eeda049949b61a78e506ac564cb822987cd8e9d0b75fdad6c3703",
+      "docs/research/external-data/history/1.8.2.json": "f5b9c6acd4c8e66fd59e1ea4bf95182ab916b8b1dbfaf59a801cd4c9402daf76"
+    }
+  },
+  {
+    "version": "1.8.3",
+    "updated_at": "2026-10-27T04:17:57.332551+09:00",
+    "reason": "뉴스 평가 진행 표시 안내와 정본 버전 표기 일치",
+    "files": {
+      "docs/research/external-data/history/1.8.3.md": "976a7cd9abadf39810814fc7893be3e9ac35a696d56bd0fee7ac731594fda028",
+      "docs/research/external-data/history/1.8.3.pdf": "2afc9798b5a30cc1a08efe2519104b3dbf921a1a8f7324591dd63a9b7b302202",
+      "docs/research/external-data/history/1.8.3.json": "fcf7cfd173d6f264e927c8d3a68930edb36b82f1da280434db3495e290450494"
+    }
+  },
+  {
+    "version": "1.9.0",
+    "updated_at": "2026-10-27T04:33:18.636222+09:00",
+    "reason": "LLM 실행 버튼 실측 토큰·USD 예상 비용 집계와 세션 갱신 타이머 수정",
+    "files": {
+      "docs/research/external-data/history/1.9.0.md": "29fa5f254e13e02f5ef7ed7d4bb3f2e555dceecf96f1deede2bdf16604fdc519",
+      "docs/research/external-data/history/1.9.0.pdf": "e9edc31eca1a442fd323660e4736880b873a39f69af8faffab591c1c8a3da4b6",
+      "docs/research/external-data/history/1.9.0.json": "d4cce46910e1f4dd1fbe1d0d82b3c9da0f47d0972bbf341605c8f076db951b03"
+    }
+  },
+  {
+    "version": "1.10.0",
+    "updated_at": "2026-10-27T04:54:43.166940+09:00",
+    "reason": "자동매수 이상 시장가 조건과 매매 가격 UI 분리 (코드만 수정)",
+    "files": {
+      "docs/research/external-data/history/1.10.0.md": "fad3e63a132eab82a8687633d13cf60d3bf482087e55645851c023a97638872e",
+      "docs/research/external-data/history/1.10.0.pdf": "9c5c6ff2dc369dafc407f33cb0bcb03742e9a249e6356383e4329dc76b583978",
+      "docs/research/external-data/history/1.10.0.json": "c8f099ec3b29fc6d380891c542d7bfc172044c986e438469c4a37d3d9ba2223a"
+    }
+  },
+  {
+    "version": "1.10.1",
+    "updated_at": "2026-10-27T10:03:12.092140+09:00",
+    "reason": "예측을 현재가 아래 박스로 통합하고 6컬럼 균등 폭·박스 배경 개선",
+    "files": {
+      "docs/research/external-data/history/1.10.1.md": "3024d8521855fd32c76fd2566c33314cf3d4fbd603e2ecc8d5358ae1678a5223",
+      "docs/research/external-data/history/1.10.1.pdf": "3a32b1dbd761cc3bd148a8e2965a8d5b74f15fe718ce87c679e09716ab0fa0e7",
+      "docs/research/external-data/history/1.10.1.json": "f1b84b9f1440ec3bf82b115b4f2a1bbf0167e687d6a5916589689a8d44bc1473"
+    }
+  },
+  {
+    "version": "1.10.2",
+    "updated_at": "2026-10-27T10:09:59.344422+09:00",
+    "reason": "매매 행 설명 축약·상세 펼침과 PC 여백 최적화",
+    "files": {
+      "docs/research/external-data/history/1.10.2.md": "910011e6be1b011c2c48bc874065c8d1cadc8010fb5475423ea451b862d25ff9",
+      "docs/research/external-data/history/1.10.2.pdf": "f4ab7f0d1d4579136e207c73c7e117a554e16f917fa852fbcb57dc0b2a1e8c7b",
+      "docs/research/external-data/history/1.10.2.json": "a3931bd1e813a2347d78bee875b962a6778a1feaea3c0d90297271e441439f53"
+    }
+  },
+  {
+    "version": "1.10.3",
+    "updated_at": "2026-10-27T10:15:24.088694+09:00",
+    "reason": "현재가 카드화·표 행 배경 일치와 테두리 강조",
+    "files": {
+      "docs/research/external-data/history/1.10.3.md": "ac85df548820b3684cfc1d7c2b0ff6a98d65d10cfebc63a82f02a147b2bd790a",
+      "docs/research/external-data/history/1.10.3.pdf": "8d8992deaee3ecb17e035ba841d2298d0883b0ca912c8c56b64051176f22cfae",
+      "docs/research/external-data/history/1.10.3.json": "a28b8c94ee0f666f725c0aff1dd4220e8f51f81356f5ac930b01b1ed40f43e4b"
+    }
+  },
+  {
+    "version": "1.10.4",
+    "updated_at": "2026-10-27T20:38:59.913035+09:00",
+    "reason": "공식 모델별 가격의 일일 확인과 실패 시 비용 미확인 처리",
+    "files": {
+      "docs/research/external-data/history/1.10.4.md": "da11cede392ebdcb7e18cfafd1249abbad884961f31bb1d4166d75e9c43caee8",
+      "docs/research/external-data/history/1.10.4.pdf": "21ff5712e8826384be2ba5b1d5e1f964014eba41546f1a5b1218eee74d77a74f",
+      "docs/research/external-data/history/1.10.4.json": "98d0da4bbc13627d65712dcb40f49a41b3595ed588dd4e555e85752660792390"
+    }
+  },
+  {
+    "version": "1.10.5",
+    "updated_at": "2026-10-27T20:45:09.999442+09:00",
+    "reason": "캐시 쓰기 단가와 모델별 비용 분해",
+    "files": {
+      "docs/research/external-data/history/1.10.5.md": "f449a9881b49b21d54ed126af34ba69f44af92295d0617e654ecc7b66acc2fc8",
+      "docs/research/external-data/history/1.10.5.pdf": "1aeecda3415444495d627d3d10bfd6844c88c4a1426aefcf0fd3424d14871369",
+      "docs/research/external-data/history/1.10.5.json": "a5633685f88db81be870e2f1120b7759d58193d5438215649f7b83d0003c9c63"
+    }
+  },
+  {
+    "version": "1.10.6",
+    "updated_at": "2026-10-27T20:59:48.379314+09:00",
+    "reason": "사용자별 LLM 호출 이력과 기간별 비용 조회",
+    "files": {
+      "docs/research/external-data/history/1.10.6.md": "d9da2d14a908871fccc37a72f2fb15b4fef17cf92856486be37fbe61219235ae",
+      "docs/research/external-data/history/1.10.6.pdf": "e3f50dfdae0b0b1ba7f7b24c04225f4137c73b122a5908769aca2a812efd3490",
+      "docs/research/external-data/history/1.10.6.json": "b5683332b8e079821b490a00b72152da26724ac4f9140323f00448ccf57b3bdc"
+    }
+  },
+  {
+    "version": "1.10.7",
+    "updated_at": "2026-10-28T01:48:27.744001+09:00",
+    "reason": "공식 모델의 기본 30분 캐시 쓰기 1.25배 단가 반영 및 후속 소스 지문 갱신; 외부 데이터 원천·계열 변경 없음",
+    "files": {
+      "docs/research/external-data/history/1.10.7.md": "d9da2d14a908871fccc37a72f2fb15b4fef17cf92856486be37fbe61219235ae",
+      "docs/research/external-data/history/1.10.7.pdf": "07377b34354e7afe79a3d4d574b1c58440462e02df7214a67a1441b74cdbb7b0",
+      "docs/research/external-data/history/1.10.7.json": "4e7fce02cf8a273135cf53111a70e9a7658be22086dadbbb941579a60813726f"
+    }
+  },
+  {
+    "version": "1.10.8",
+    "updated_at": "2026-10-28T01:49:57.107904+09:00",
+    "reason": "정본 목록의 기준일·현재 버전 및 캐시 쓰기 정책 본문 정정; 원천 데이터 변경 없음",
+    "files": {
+      "docs/research/external-data/history/1.10.8.md": "a264087f011ff21ea6ec4582ef78533277029c0cfe6f9c6a4160c079beb4234d",
+      "docs/research/external-data/history/1.10.8.pdf": "114cc5acb3ec2ab79007232ce3071a8eb3b8881e0f722eb5ecd4eebdf31a632c",
+      "docs/research/external-data/history/1.10.8.json": "4b467c22f6c1a40686d002dccfd06f1cd372ab53d53a378295fd5e3e256e34a8"
+    }
+  }
+]

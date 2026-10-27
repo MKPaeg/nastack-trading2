@@ -14,7 +14,7 @@ from .db import aware, now
 from .dimension_catalog import DIMENSIONS
 from .dimensions import excluded_ids
 from .llm_tasks import prompt_snapshot, task_policy
-from .llm_usage import tracked_usage, usage_snapshot
+from .llm_usage import tracked_usage, usage_category, usage_snapshot
 from .model_catalog import cloud_catalog
 from .models import (
     BrokerSnapshot,
@@ -192,8 +192,9 @@ def generate(factory, config, owner_id, codes, transport=None, *, cloud_confirme
     """Generate defaults; explicit one-run consent does not enable future cloud jobs."""
     base_config = config
     usage_id = str(uuid4())
-    prepare_business(factory, config, owner_id, codes, transport,
-                     recommendation_once=recommendation_once, cloud_confirmed=cloud_confirmed)
+    with usage_category("collection"):
+        prepare_business(factory, config, owner_id, codes, transport,
+                         recommendation_once=recommendation_once, cloud_confirmed=cloud_confirmed)
     with factory() as db:
         user = db.get(User, owner_id)
         if not user or not user.active or user.role == "viewer":
@@ -680,7 +681,7 @@ def defaults_router(current_user, administrator, db_session, factory, config, tr
         version: int
         enabled: bool
         allow_cloud: bool = False
-        model: str
+        model: str | None = None
         research_business: bool | None = None
 
     @router.put("/api/admin/vector-defaults")
@@ -690,11 +691,13 @@ def defaults_router(current_user, administrator, db_session, factory, config, tr
         db.refresh(row, with_for_update=True)
         if row.version != payload.version:
             raise HTTPException(409, "관리자 기본 설정이 변경되었습니다. 새로고침하세요.")
-        model = next(
-            (item for item in model_options(db, user, config)["items"] if item["id"] == payload.model), None
-        )
-        if not model:
-            raise HTTPException(422, "서버에서 허용한 모델을 선택하세요.")
+        model = None
+        if payload.model is not None:
+            model = next(
+                (item for item in model_options(db, user, config)["items"] if item["id"] == payload.model), None
+            )
+            if not model:
+                raise HTTPException(422, "서버에서 허용한 모델을 선택하세요.")
         if payload.allow_cloud and not row.value.get("cloud_enabled"):
             raise HTTPException(409, "관리자 설정의 클라우드 사용을 먼저 허용하세요.")
         row.value = {
@@ -706,12 +709,17 @@ def defaults_router(current_user, administrator, db_session, factory, config, tr
                 if payload.research_business is not None
                 else {}
             ),
-            "analysis_model": {
-                "provider": model["provider"],
-                "model_id": model["model"],
-                "base_url": config.vllm_base_url if model["provider"] == "vllm" else "",
-            },
-            **({"cloud_model": model["model"]} if model["provider"] == "openai" else {}),
+            **(
+                {
+                    "analysis_model": {
+                        "provider": model["provider"],
+                        "model_id": model["model"],
+                        "base_url": config.vllm_base_url if model["provider"] == "vllm" else "",
+                    },
+                    **({"cloud_model": model["model"]} if model["provider"] == "openai" else {}),
+                }
+                if model else {}
+            ),
         }
         row.version += 1
         audit(

@@ -15,7 +15,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 
 from .db import aware, local_time, now
-from .models import BrokerConnection, BrokerProbe, User
+from .models import BrokerConnection, BrokerProbe, TradePlan, User
 from .security import audit
 
 AUTH_URL = "https://api.nhplug.com:8443/oauth2/token"
@@ -94,13 +94,15 @@ class NamuhAuth:
         ]
         return hashlib.sha256("\0".join(values).encode()).hexdigest()
 
-    def verify(self, connection, email):
+    def verify(self, connection, email, *, force=False):
         if self.missing():
             raise BrokerFailure("NOT_CONFIGURED")
         if email.lower() != self.config.namuh_owner_email.strip().lower():
             raise BrokerFailure("OWNER_MISMATCH")
         cipher, scope = self.cipher(), self.scope()
         if (
+            not force
+            and
             connection.token_scope == scope
             and connection.token_ciphertext
             and connection.token_expires_at
@@ -164,6 +166,90 @@ class NamuhAuth:
         ):
             raise BrokerFailure("INVALID_RESPONSE")
         return cipher.encrypt(token.encode()).decode(), now() + timedelta(seconds=int(ttl)), scope, False
+
+
+def refresh_automatic_namuh(db, user, config, transport=None):
+    """Renew only an approved user's active live connection, without placing orders."""
+    from .user_brokers import personal_config
+
+    if not user.active or user.role == "viewer":
+        return False
+    plans = db.scalars(
+        select(TradePlan).where(
+            TradePlan.owner_id == user.id,
+            TradePlan.tenant_id == user.tenant_id,
+            TradePlan.broker == "namuh",
+        )
+    )
+    if not any(p.value.get("active") and p.value.get("mode") == "automatic" and not p.value.get("archived") for p in plans):
+        return False
+    row = db.scalar(select(BrokerConnection).where(
+        BrokerConnection.owner_id == user.id, BrokerConnection.tenant_id == user.tenant_id
+    ))
+    if not row or not row.enabled or row.environment != "live":
+        return False
+    provider = NamuhAuth(personal_config(db, user, config, "namuh"), transport)
+    if provider.missing() or user.email.lower() != provider.config.namuh_owner_email.lower():
+        return False
+    if (row.token_expires_at and aware(row.token_expires_at) > now() + timedelta(minutes=10)
+            and row.token_scope == provider.scope()):
+        return False
+    claimed = db.execute(
+        update(BrokerConnection).where(
+            BrokerConnection.owner_id == user.id,
+            BrokerConnection.tenant_id == user.tenant_id,
+            BrokerConnection.enabled.is_(True),
+            BrokerConnection.environment == "live",
+            BrokerConnection.version == row.version,
+            BrokerConnection.next_probe_at <= now(),
+        ).values(next_probe_at=now() + timedelta(minutes=5)).execution_options(synchronize_session=False)
+    )
+    if claimed.rowcount != 1:
+        db.rollback()
+        return False
+    version, scope = row.version, provider.scope()
+    db.commit()  # Release the claim transaction before provider I/O.
+    try:
+        result = provider.verify(row, user.email, force=True)
+        failure = None
+    except BrokerFailure as error:
+        result, failure = None, error.code
+    db.expire_all()
+    current = db.scalar(
+        select(BrokerConnection).where(
+            BrokerConnection.owner_id == user.id, BrokerConnection.tenant_id == user.tenant_id
+        ).with_for_update().execution_options(populate_existing=True)
+    )
+    owner = db.scalar(select(User).where(
+        User.id == user.id, User.tenant_id == user.tenant_id
+    ).execution_options(populate_existing=True))
+    current_plans = db.scalars(select(TradePlan).where(
+        TradePlan.owner_id == user.id, TradePlan.tenant_id == user.tenant_id,
+        TradePlan.broker == "namuh",
+    ))
+    still_active = any(p.value.get("active") and p.value.get("mode") == "automatic"
+                       and not p.value.get("archived") for p in current_plans)
+    if (not current or not owner or not owner.active or owner.role == "viewer"
+            or not still_active or not current.enabled or current.environment != "live"
+            or current.version != version
+            or NamuhAuth(personal_config(db, owner, config, "namuh")).scope() != scope):
+        db.rollback()
+        return False
+    if not failure:
+        current.token_ciphertext, current.token_expires_at, current.token_scope, reused = result
+    else:
+        reused = False
+    probe = BrokerProbe(
+        owner_id=user.id, tenant_id=user.tenant_id, policy_version=version,
+        environment="live", status="failed" if failure else "completed",
+        error_code=failure, reused_token=reused, finished_at=now(),
+    )
+    db.add(probe)
+    db.flush()
+    audit(db, owner, "broker.auth_auto_refreshed", probe.id,
+          {"status": probe.status, "error_code": failure})
+    db.commit()
+    return failure is None
 
 
 def brokers_router(administrator, db_session, config, transport=None):

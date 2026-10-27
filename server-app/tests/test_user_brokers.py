@@ -65,6 +65,10 @@ def test_personal_keys_and_settings_are_isolated(setup):
         )
         assert second.get("/api/settings").json()["value"]["screen_state"]["view"] == "orders"
         assert "screen_state" not in first.get("/api/settings").json()["value"]
+        assert second.put("/api/settings/screen-state", json={"view": "data", "data_tab": "business"}).status_code == 200
+        assert second.put("/api/settings/screen-state", json={"view": "orders", "data_tab": "business"}).status_code == 200
+        assert second.get("/api/settings").json()["value"]["screen_state"]["data_tab"] == "business"
+        assert "screen_state" not in first.get("/api/settings").json()["value"]
         with setup[1]() as db:
             row = db.get(UserSettings, other_id)
             row.value = {**row.value, "notification_email_lists": [{"id": "synthetic"}]}

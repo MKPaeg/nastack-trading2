@@ -84,7 +84,7 @@ class ScreenState(BaseModel):
         "data",
     ] = "dashboard"
     analysis_tab: Literal["detail", "dimensions", "vectors", "sources"] = "detail"
-    data_tab: Literal["status", "dimensions", "news", "statistics"] = "status"
+    data_tab: Literal["status", "dimensions", "news", "business", "statistics"] = "status"
     recommendations_market: Literal["000", "001", "101"] = "000"
     holdings_tab: Literal["positions", "returns"] = "positions"
     return_period: Literal["year", "quarter", "month", "week"] = "year"

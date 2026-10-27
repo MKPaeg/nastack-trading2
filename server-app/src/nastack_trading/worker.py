@@ -1,4 +1,5 @@
 import argparse
+import logging
 import time
 from datetime import timedelta
 from threading import Event, Thread
@@ -8,6 +9,8 @@ from sqlalchemy import select, update
 from .config import Config
 from .db import connect, now
 from .jobs import claim_job, demo_result, transition
+from .llm_usage import usage_scope
+from .llm_usage_history import save_usage
 from .models import AnalysisRun
 from .research import ResearchError, ResearchPipeline
 
@@ -62,12 +65,20 @@ def work_once(factory, lease_seconds=30, pause=time.sleep, evaluator=demo_result
                     external_config(db, owner, evaluator.config), evaluator.transport,
                     prompt=run.settings_snapshot.get("_research_prompt"),
                 )
-            result = personal_evaluator(
-                run,
-                lambda progress, message: transition(
-                    factory, run_id, token, progress=progress, message=message, lease_seconds=lease_seconds
-                ),
-            )
+            with usage_scope("evaluation") as ledger:
+                try:
+                    result = personal_evaluator(
+                        run,
+                        lambda progress, message: transition(
+                            factory, run_id, token, progress=progress, message=message, lease_seconds=lease_seconds
+                        ),
+                    )
+                finally:
+                    if ledger:
+                        try:
+                            save_usage(factory, run.owner_id, run.tenant_id, ledger)
+                        except Exception:
+                            logging.getLogger(__name__).warning("LLM usage history could not be saved")
         else:
             if run.kind == "research":
                 raise ResearchError("RESEARCH_DISABLED")

@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
+from nastack_trading import model_pricing
 from nastack_trading.app import create_app
 from nastack_trading.cli import migrate
 from nastack_trading.config import Config
@@ -15,6 +16,18 @@ from nastack_trading.security import bootstrap
 EMAIL = "admin@example.com"
 CODE = "test-admin-code-only-123456"
 ORIGIN = "http://testserver"
+
+
+@pytest.fixture(autouse=True)
+def block_live_pricing(monkeypatch):
+    """Tests must not depend on a changing public website or make network calls."""
+    model_pricing._CACHE.clear()
+    model_pricing._FAILED_UNTIL.clear()
+
+    def blocked(*args):
+        raise ValueError("live pricing disabled during tests")
+
+    monkeypatch.setattr(model_pricing, "fetch_model_price", blocked)
 
 
 @pytest.fixture

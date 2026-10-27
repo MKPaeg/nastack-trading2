@@ -11,7 +11,7 @@ from nastack_trading.app import create_app
 from nastack_trading.config import Config
 from nastack_trading.db import now
 from nastack_trading.jobs import claim_job
-from nastack_trading.models import AnalysisRun
+from nastack_trading.models import AnalysisRun, LLMUsageRecord
 from nastack_trading.research import ResearchError, ResearchPipeline, public_url
 from nastack_trading.schemas import Preferences
 from nastack_trading.worker import work_once
@@ -188,6 +188,12 @@ def test_worker_persists_live_report(admin, setup):
     saved = admin.get(f"/api/runs/{response['id']}").json()
     assert saved["status"] == "completed" and saved["result"]["evidence_ids"] == ["E1"]
     assert saved["result"]["settings_version"] == 2
+    with setup[1]() as db:
+        records = db.query(LLMUsageRecord).all()
+        assert len(records) == 1
+        assert records[0].owner_id == db.get(AnalysisRun, response["id"]).owner_id
+        assert records[0].category == "evaluation" and records[0].model == "local-model"
+        assert records[0].estimated_usd is None  # Provider omitted usage and local pricing.
 
 
 def test_external_crash_not_replayed(admin, setup):

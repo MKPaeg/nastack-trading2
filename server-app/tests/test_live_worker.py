@@ -9,6 +9,7 @@ from nastack_trading.live_worker import LiveWorker, entry_window, leader
 from nastack_trading.models import KiwoomConnection, TradeOrder, TradePlan, User, UserSettings
 from nastack_trading.order_boundary import before_transmission
 from nastack_trading.trading import PlanControl, TradingService, control_plan
+from nastack_trading.trade_safety import RuntimeUpdate, save_automatic_runtime
 
 AT = datetime.fromisoformat("2026-10-22T10:05:00+09:00")
 
@@ -320,6 +321,88 @@ def test_new_start_watches_existing_holding_without_additional_buy_and_sells_all
     with factory() as db:
         sale = db.scalar(select(TradeOrder).where(TradeOrder.request_key.like("%:sell")))
         assert sale.value["sale_cost_basis"] == 100
+
+
+def explicitly_start_stopped_plan(worker, factory, uid, pid, *, buy_enabled=True):
+    with factory() as db:
+        plan = db.get(TradePlan, pid)
+        plan.value = {**plan.value, "active": False, "buy_enabled": buy_enabled}
+        db.commit()
+        control_plan(
+            db,
+            db.get(User, uid),
+            pid,
+            PlanControl(version=plan.version, action="start", confirmation="실전 자동매매 시작 확인"),
+            worker.config,
+        )
+
+
+def test_explicit_start_buys_once_with_existing_holding_and_survives_restart(runner):
+    worker, gateway, factory, uid, tid, pid = runner
+    gateway.held = 2
+    explicitly_start_stopped_plan(worker, factory, uid, pid)
+    worker.tick()
+    assert gateway.wire == [(uid, "034220", "buy", 1, 100)]
+    assert gateway.held == 3
+    restarted = LiveWorker(worker.config, worker.engine, factory, gateway)
+    restarted.tick()
+    restarted.tick()
+    assert len(gateway.wire) == 1
+
+
+def test_global_pause_resume_revokes_held_entry_but_keeps_exit_watching(runner):
+    worker, gateway, factory, uid, tid, pid = runner
+    gateway.held = 2
+    explicitly_start_stopped_plan(worker, factory, uid, pid)
+    with factory() as db:
+        user = db.get(User, uid)
+        save_automatic_runtime(db, user, RuntimeUpdate(version=0, paused=True))
+        save_automatic_runtime(db, user, RuntimeUpdate(version=1, paused=False))
+    worker.tick()
+    assert gateway.wire == []
+    gateway.price = 105
+    worker.tick()
+    assert gateway.wire == [(uid, "034220", "sell", 2, None)]
+
+
+def test_pause_between_preview_and_execution_blocks_held_buy(runner):
+    from nastack_trading.trading import OrderPreview
+
+    worker, gateway, factory, uid, tid, pid = runner
+    gateway.held = 2
+    explicitly_start_stopped_plan(worker, factory, uid, pid)
+    with factory() as db:
+        user = db.get(User, uid)
+        plan = db.get(TradePlan, pid)
+        intent = worker.service.preview(
+            db,
+            user,
+            OrderPreview(
+                plan_id=pid,
+                side="buy",
+                request_key=f"auto:{pid}:{plan.value['auto_control']['generation']}:0:buy",
+                limit_price=100,
+            ),
+            automatic=True,
+        )
+        save_automatic_runtime(db, user, RuntimeUpdate(version=0, paused=True))
+        save_automatic_runtime(db, user, RuntimeUpdate(version=1, paused=False))
+        with pytest.raises(HTTPException) as error:
+            worker.service.execute(db, user, intent.id)
+        assert error.value.status_code == 409
+    assert gateway.wire == []
+
+
+def test_explicit_start_does_not_buy_when_disabled_or_exit_condition_met(runner):
+    worker, gateway, factory, uid, tid, pid = runner
+    gateway.held = 2
+    explicitly_start_stopped_plan(worker, factory, uid, pid, buy_enabled=False)
+    worker.tick()
+    assert gateway.wire == []
+    explicitly_start_stopped_plan(worker, factory, uid, pid)
+    gateway.price = 105
+    worker.tick()
+    assert gateway.wire == [(uid, "034220", "sell", 2, None)]
 
 
 def test_inline_settings_cannot_switch_instrument(runner):

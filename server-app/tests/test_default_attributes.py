@@ -104,6 +104,32 @@ def client_for(admin, setup, handler):
     )
 
 
+def test_attribute_policy_save_without_model_preserves_the_single_analysis_model(admin, setup):
+    from nastack_trading.models import UserSettings
+
+    with setup[1]() as db:
+        user = db.scalar(select(User))
+        before = db.get(UserSettings, user.id).value
+        analysis_model = before["analysis_model"]
+        cloud_model = before["cloud_model"]
+    current = admin.get("/api/user/vector-defaults").json()
+    response = admin.put(
+        "/api/user/vector-defaults",
+        json={
+            "version": current["version"],
+            "enabled": False,
+            "allow_cloud": False,
+            "research_business": False,
+        },
+    )
+    assert response.status_code == 200, response.text
+    with setup[1]() as db:
+        saved = db.get(UserSettings, user.id).value
+        assert saved["analysis_model"] == analysis_model
+        assert saved["cloud_model"] == cloud_model
+        assert saved["default_attributes_enabled"] is False
+
+
 @pytest.mark.parametrize("self_reference", [True, False])
 def test_same_instrument_blocked_but_related_etf_proxy_allowed(admin, setup, monkeypatch, self_reference):
     from nastack_trading import default_attributes

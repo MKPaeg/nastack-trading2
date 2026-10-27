@@ -10,7 +10,7 @@ import os
 import tempfile
 import threading
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -28,6 +28,7 @@ from .trading import (
     adjustment_preview_pending,
     automatic_signal,
     control_plan,
+    held_entry_authorized,
     stop_loss_hit,
 )
 
@@ -218,6 +219,47 @@ class LiveWorker:
                 offset = self.cursor % len(ids)
                 ids = ids[offset:] + ids[:offset]
                 self.cursor += 1
+            from .brokers import refresh_automatic_namuh
+            from .trade_gateway import TradeGateway
+
+            if isinstance(self.service.gateway, TradeGateway):
+                refreshed = set()
+                for _, owner, tenant in ids:
+                    if (owner, tenant) in refreshed or self.stop_event.is_set():
+                        continue
+                    refreshed.add((owner, tenant))
+                    with self.factory() as db:
+                        user = db.scalar(select(User).where(User.id == owner, User.tenant_id == tenant))
+                        if user:
+                            try:
+                                refresh_automatic_namuh(
+                                    db, user, self.config, self.service.gateway.transports["namuh"]
+                                )
+                                from .kiwoom import KiwoomReader
+                                from .models import KiwoomConnection
+
+                                connection = db.scalar(select(KiwoomConnection).where(
+                                    KiwoomConnection.owner_id == owner,
+                                    KiwoomConnection.tenant_id == tenant,
+                                ))
+                                kiwoom_plans = db.scalars(select(TradePlan).where(
+                                    TradePlan.owner_id == owner,
+                                    TradePlan.tenant_id == tenant,
+                                    TradePlan.broker == "kiwoom",
+                                ))
+                                active_kiwoom = any(
+                                    p.value.get("active") and p.value.get("mode") == "automatic"
+                                    and not p.value.get("archived") for p in kiwoom_plans
+                                )
+                                if (active_kiwoom and user.active and user.role != "viewer" and connection
+                                        and connection.enabled and connection.environment == "live"
+                                        and (not connection.token_expires_at or
+                                             aware(connection.token_expires_at) <= now() + timedelta(minutes=10))):
+                                    KiwoomReader(
+                                        self.config, self.service.gateway.transports["kiwoom"]
+                                    ).token(db, user, force=True)
+                            except Exception:
+                                db.rollback()  # Existing order gates still block an expired credential.
             for identity, owner, tenant in ids:
                 if self.stop_event.is_set():
                     return
@@ -358,8 +400,11 @@ class LiveWorker:
         buy_key = f"auto:{identity}:{generation}:{round_number}:buy"
         round_buy = next((order for order in orders if order.request_key == buy_key), None)
         buy_first = plan.value.get("buy_enabled", True)
+        held_entry = held > 0 and held_entry_authorized(db, user, plan)
         entry_pending = (
-            buy_first and not held and (round_buy is None or round_buy.status in {"preview", "blocked"})
+            buy_first
+            and (not held or held_entry)
+            and (round_buy is None or round_buy.status in {"preview", "blocked"})
         )
         if (
             buy_first
@@ -378,7 +423,7 @@ class LiveWorker:
             at,
             True,
             price=price,
-            profit_rate=None if entry_pending else profit,
+            profit_rate=profit,
             entry_allowed=entry_allowed,
         )
         if stopping:

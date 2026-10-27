@@ -184,7 +184,7 @@ async function renderTrading() {
   const area = $("#liveContent");area.replaceChildren();
   if(state.tradingTabOwner!==state.user.id){state.tradingTab="orders";state.tradingTabOwner=state.user.id;}
   const tabs=node("div",undefined,"admin-tabs");tabs.setAttribute("role","tablist");tabs.setAttribute("aria-label","종목 매매 화면");area.append(tabs);
-  for(const [key,label] of [["orders","매매 관리"],["realized","실현손익"]]){const button=node("button",label,"admin-tab");button.setAttribute("role","tab");button.setAttribute("aria-selected",String((state.tradingTab||"orders")===key));button.addEventListener("click",()=>{state.tradingTab=key;renderTrading().catch(reportError);});tabs.append(button);}
+  for(const [key,label] of [["orders","매매 관리"],["realized","실현손익"]]){const button=node("button",label,"admin-tab");button.setAttribute("role","tab");button.setAttribute("aria-selected",String((state.tradingTab||"orders")===key));button.addEventListener("click",()=>{state.tradingTab=key;updateScreenHelp();renderTrading().catch(reportError);});tabs.append(button);}
   if(state.tradingTab==="realized"){await renderRealizedSales(area);return;}
   const section=panel("종목 매매 · 현금 / KRX"),intro=node("p","불러오는 중…","warning");area.append(section);section.append(intro);
   intro.hidden=true;
@@ -309,12 +309,12 @@ async function renderTrading() {
       const modeCell=node("td"),fraction=choice(`${plan.name} 매매 비중`,[[100,"100%"],[50,"50%"],[20,"20%"],[10,"10%"]],plan.fraction,modeCell,plan.name);row.append(modeCell);
       const autoMax=node("input"),quantityLabel=node("label","매매 수량 (주) ");autoMax.type="number";autoMax.min="1";autoMax.max="10000000";autoMax.step="1";autoMax.value=plan.auto_max_quantity===1&&!plan.quantity_limit_explicit?"":String(plan.auto_max_quantity||"");autoMax.placeholder="비우면 비중 적용";autoMax.setAttribute("aria-label",`${plan.name} 매매 수량`);autoMax.disabled=state.user.role==="viewer";quantityLabel.append(autoMax);modeCell.append(quantityLabel,node("small","자동 신규매수·추가매수·일부매도에 이 수량을 사용합니다. 비우면 매수는 주문가능 현금, 매도는 매도가능 수량의 선택 비중을 적용합니다. 자동 익절·손절은 남은 보유분 전량을 매도합니다."));
       const conditionSupported=metadata.buy_condition_version===1;
-      const buyCondition=choice(`${plan.name} 자동매수 가격 조건`,[["at_or_below","설정가격 이하 · 지정가 매수"],["at_or_above","설정가격 이상 · 시장가 매수"]],plan.buy_condition||"at_or_below",modeCell,plan.name);buyCondition.disabled=state.user.role==="viewer"||!conditionSupported;
+      const buyCondition=choice(`${plan.name} 자동매수 가격 조건`,[["at_or_below","설정가 이하 · 지정가"],["at_or_above","설정가 이상 · 시장가"]],plan.buy_condition||"at_or_below",modeCell,plan.name);buyCondition.classList.add("trade-buy-condition");buyCondition.disabled=state.user.role==="viewer"||!conditionSupported;
       const priceLabel=node("label"),priceCaption=node("span"),priceInput=node("input"),buyHint=node("small");setupPriceInput(priceInput);priceInput.value=plan.buy_price?formatPriceInput(plan.buy_price):"";priceInput.setAttribute("aria-label",`${plan.name} 기준 매수가격`);priceInput.disabled=state.user.role==="viewer";priceLabel.append(priceCaption,priceInput);
       function buyConditionHint(){const above=buyCondition.value==="at_or_above";priceCaption.textContent=above?"매수 기준가 (원 · 이상)":"매수 지정가 (원 · 이하)";priceInput.placeholder=above?"예: 50,000원 이상 시 시장가":"매수 최대가격 필수";buyHint.textContent=above?"현재가가 기준가격 이상(같을 때 포함)이면 시장가로 매수합니다. 실제 체결가격 상한은 없습니다. 조건 방향 변경 시 자동매매가 정지되며 시작·예약을 다시 승인해야 합니다.":"현재가가 기준가격 이하(같을 때 포함)이면 기준가격 지정가로 매수합니다. 조건 방향 변경 시 시작·예약 재승인이 필요합니다.";}
       buyCondition.addEventListener("change",buyConditionHint);buyConditionHint();
       const sellPriceLabel=node("label","일부매도 지정가 (원)"),sellPrice=node("input");setupPriceInput(sellPrice);sellPrice.value=plan.manual_sell_price?formatPriceInput(plan.manual_sell_price):"";sellPrice.placeholder="비우면 시장가";sellPrice.setAttribute("aria-label",`${plan.name} 일부매도 지정가격`);sellPrice.disabled=state.user.role==="viewer";sellPriceLabel.append(sellPrice);
-      const buyCell=node("td"),buyEnabled=node("input"),buyLabel=node("label","매수 사용","repeat-trading-option");buyEnabled.type="checkbox";buyEnabled.checked=plan.buy_enabled!==false;buyEnabled.disabled=state.user.role==="viewer";buyEnabled.setAttribute("aria-label",`${plan.name} 매수 사용`);buyLabel.prepend(buyEnabled);buyCell.append(buyLabel,node("small","자동 신규매수 허용 여부입니다. 보유 중에는 자동 추가매수하지 않습니다. 추가매수는 아래 버튼으로 별도 승인합니다."));row.append(buyCell);buyCell.append(buyCondition.parentElement,priceLabel,buyHint);
+      const buyCell=node("td"),buyEnabled=node("input"),buyLabel=node("label","매수 사용","repeat-trading-option");buyEnabled.type="checkbox";buyEnabled.checked=plan.buy_enabled!==false;buyEnabled.disabled=state.user.role==="viewer";buyEnabled.setAttribute("aria-label",`${plan.name} 매수 사용`);buyLabel.prepend(buyEnabled);buyCell.append(buyLabel,node("small","정지 상태에서 새로 시작하면 보유 중에도 가격 조건에 따라 자동 매수할 수 있습니다. 전체 일시정지 후 재개에는 보유종목 추가매수를 하지 않습니다."));row.append(buyCell);buyCell.append(buyCondition.parentElement,priceLabel,buyHint);
       const manualBuyLabel=node("label","추가매수 지정가 (원)"),manualBuy=node("input");setupPriceInput(manualBuy);manualBuy.value=formatPriceInput(plan.manual_buy_price??plan.buy_price??"");manualBuy.placeholder="추가매수의 최대 체결가격";manualBuy.setAttribute("aria-label",`${plan.name} 추가매수 지정가격`);manualBuy.disabled=state.user.role==="viewer"||!conditionSupported;manualBuyLabel.append(manualBuy);buyCell.append(node("h4","수동 추가매수 · 별도 주문"),manualBuyLabel,node("small","아래 추가매수 버튼에만 적용되는 매수 상한입니다. 자동매수 기준가격과 별도이며 최종 승인 후 지정가 주문합니다."));
       const buy=node("button","추가매수","trade-buy");buy.setAttribute("aria-label",`${plan.name} 추가매수`);buy.disabled=state.user.role==="viewer";buyCell.append(buy);
       const sellCell=node("td"),profit=choice(`${plan.name} 자동 매도 이익률`,[[3,"3%"],[5,"5%"],[7,"7%"],[10,"10%"],[15,"15%"]],plan.take_profit,sellCell,plan.name);sellCell.append(node("small","보유 수익률이 선택값 이상이면 전량 매도"));row.append(sellCell);
@@ -324,7 +324,7 @@ async function renderTrading() {
       const stopRate=choice(`${plan.name} 손절 손실률`,[5,6,7,8,9,10,15,20].map(v=>[v,`${v}%`]),plan.stop_loss_rate||5,sellCell,plan.name),stopPriceLabel=node("label","손절 가격 (원 · 선택)");setupPriceInput(stopPrice);stopPrice.value=plan.stop_loss_price?formatPriceInput(plan.stop_loss_price):"";stopPrice.placeholder="비우면 손실률만 적용";stopPrice.setAttribute("aria-label",`${plan.name} 손절 가격`);stopPriceLabel.append(stopPrice);sellCell.append(stopPriceLabel,node("small","손절 조건 충족 시 남은 보유분 전량을 시장가 매도합니다. 실제 체결가는 달라질 수 있습니다."));
       function stopFields(){stopRate.disabled=stopPrice.disabled=!stopLoss.checked||state.user.role==="viewer";}stopLoss.disabled=state.user.role==="viewer";stopLoss.addEventListener("change",stopFields);stopFields();
       const sell=node("button","일부매도","trade-sell");sell.setAttribute("aria-label",`${plan.name} 일부매도`);sell.disabled=state.user.role==="viewer";sellCell.append(node("h4","수동 일부매도 · 별도 주문"),sellPriceLabel,node("small","지정가격 이상에서만 체결됩니다. 비우면 시장가입니다. 자동 익절·손절 조건과는 별개입니다."),sell,node("small","공통 수량·비중과 일부매도 지정가격을 사용합니다. 전량 청산하면 자동매매를 종료하며 재매수하지 않습니다."));
-      const autoBuyBox=tradeSettingBox("자동매수",buyLabel,buyCondition.parentElement,priceLabel,buyHint,node("small","미보유 상태의 자동 신규매수에만 적용합니다. 시작·예약은 오른쪽에서 별도로 승인하세요."));
+      const autoBuyBox=tradeSettingBox("자동매수",buyLabel,buyCondition.parentElement,priceLabel,buyHint,node("small","정지 후 새 시작에는 보유 상태에도 적용됩니다. 예약·일시정지 후 재개에는 보유종목 추가매수를 하지 않습니다."));
       if(!conditionSupported)autoBuyBox.append(node("p","서버 코드 반영 전 · 새 매수 조건은 아직 사용할 수 없습니다.","warning"));
       buyCell.replaceChildren(autoBuyBox,tradeSettingBox("수동 추가매수",manualBuyLabel,node("small","추가매수 버튼에만 사용하는 지정가 상한입니다. 자동매수의 기준가격·이상/이하 조건과 별개이며 최종 확인 후 주문합니다."),buy));
       sellCell.replaceChildren(tradeSettingBox("자동 익절",takeLabel,profit.parentElement,node("small","보유 수익률이 선택값 이상이면 남은 보유분 전량을 시장가 매도합니다.")),tradeSettingBox("자동 손절",stopLabel,stopRate.parentElement,stopPriceLabel,node("small","손절 조건 충족 시 남은 보유분 전량을 시장가 매도합니다. 일부매도 지정가와 무관합니다.")),tradeSettingBox("수동 일부매도",sellPriceLabel,node("small","이 버튼의 주문은 지정가격 이상에서만 체결됩니다. 비우면 시장가입니다. 공통 수량·비중을 사용하며 전량 청산 시 자동매매를 종료합니다."),sell));
@@ -441,13 +441,20 @@ async function renderTradingSettings(area) {
 }
 
 async function renderEmailLists(area) {
-  area.append(node("h2", "이메일 수신 목록 · SMTP 발송"));
+  const section=node("section",undefined,"email-lists-card");
+  section.append(node("h2", "이메일 수신 목록 · SMTP 발송"));area.append(section);
   const status=node("p","","helper"), select=node("select"), name=node("input"), emails=node("textarea"), enabled=node("input"), subject=node("input"), body=node("textarea"), message=node("p","","helper");
-  select.setAttribute("aria-label","이메일 수신 목록"); name.setAttribute("aria-label","이메일 목록 이름"); emails.setAttribute("aria-label","수신 이메일 주소"); subject.setAttribute("aria-label","이메일 제목"); body.setAttribute("aria-label","이메일 본문"); enabled.type="checkbox";
+  enabled.type="checkbox";
   let items=[], current=null;
-  function label(text,input){const el=node("label",text);el.append(input);return el;}
+  function label(text,input){const el=node("label",text,"email-list-field");el.append(input);return el;}
   const save=node("button","이메일 목록 저장","secondary"), remove=node("button","이메일 목록 삭제","secondary"), test=node("button","테스트 이메일 전송","secondary"), send=node("button","이메일 발송","secondary");
-  area.append(status,select,label("목록 이름",name),label("수신 이메일 · 줄바꿈/쉼표로 구분",emails),label("이 목록에 매매 알림 전송 (종목·수량 포함)",enabled),save,remove,label("제목",subject),label("본문",body),test,send,message);
+  const fields=node("div",undefined,"email-list-fields"),listActions=node("div",undefined,"connection-actions"),compose=node("div",undefined,"email-compose"),sendActions=node("div",undefined,"connection-actions");
+  emails.rows=4;body.rows=4;
+  const notifyLabel=node("label",undefined,"email-list-checkbox");notifyLabel.append(enabled,node("span","이 목록에 매매 알림 전송 (종목·수량 포함)"));
+  fields.append(label("수신 목록 선택",select),label("목록 이름",name),label("수신 이메일 · 한 줄에 한 주소 또는 쉼표로 구분",emails),notifyLabel);
+  listActions.append(save,remove);
+  compose.append(node("h3","선택한 목록에 이메일 보내기"),label("제목",subject),label("본문",body));sendActions.append(test,send);compose.append(sendActions);
+  message.setAttribute("role","status");section.append(status,fields,listActions,compose,message);
   function choose(){current=items.find(v=>v.id===select.value)||null;name.value=current?.name||"";emails.value=current?.emails.join("\n")||"";enabled.checked=!!current?.trade_notifications;remove.disabled=test.disabled=send.disabled=!current||state.user.role==='viewer';}
   async function load(id){const value=await api("/admin/email-lists");items=value.items;status.textContent=`SMTP ${value.smtp_configured?'설정됨':'미설정'} · 주소는 수신자별 개별 발송되며 서로 노출되지 않습니다. 목록 삭제는 되돌릴 수 없습니다.`;select.replaceChildren(new Option("새 수신 목록","new"),...items.map(v=>new Option(v.name,v.id)));select.value=id||"new";choose();if(state.user.role==='viewer'){for(const el of [name,emails,enabled,subject,body,save,remove,test,send])el.disabled=true;}}
   select.addEventListener("change",choose);
@@ -510,7 +517,7 @@ function persistScreenState(){
   if(!state.user)return;
   const value={view:state.view,analysis_tab:state.analysisTab,data_tab:state.dataCollectionTab||"status",recommendations_market:state.recommendationsMarket||"000",holdings_tab:state.holdingsTab,return_period:state.returnPeriod,code:state.selectedInstrument?.code||"",news_code:state.newsCode||"",trade_broker:state.tradeBroker||"namuh",trade_code:state.tradeCode||"",realized_code:state.realizedCode||"",dimension:{...dimensionDraft},chart_start:Object.fromEntries(state.chartStartByCode),chart_end:Object.fromEntries(state.chartEndByCode),report:state.reportFilters||{}},signature=JSON.stringify(value);
   if(signature===screenStateSignature)return;clearTimeout(screenStateTimer);const owner=state.user.id;
-  screenStateTimer=setTimeout(()=>{screenStateQueue=screenStateQueue.catch(()=>{}).then(async()=>{if(state.user?.id!==owner)return;await api("/settings/screen-state",{method:"PUT",body:signature});screenStateSignature=signature;}).catch(()=>showToast("화면 설정을 저장하지 못했습니다."));},600);
+  screenStateTimer=setTimeout(()=>{screenStateQueue=screenStateQueue.catch(()=>{}).then(async()=>{if(state.user?.id!==owner)return;await api("/settings/screen-state",{method:"PUT",body:signature});screenStateSignature=signature;}).catch(error=>{if(state.user?.id===owner)showToast(`화면 설정을 저장하지 못했습니다. ${error.message}`);});},600);
 }
 async function renderPersonalConnections(area){
   const owner=state.user?.id,tenant=state.user?.tenant_id;

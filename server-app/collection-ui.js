@@ -7,21 +7,25 @@ function llmUsageText(usage){
   if(!usage)return "사용량 미보고 · 토큰·비용 확인 불가 (0원으로 간주하지 않음)";
   const amount=value=>Number(value||0).toLocaleString("ko-KR");
   const cost=!usage.cost_known&&!usage.priced_calls?"비용 미확인":`${usage.cost_known?"예상 비용":"확인된 비용 소계"} US$${Number(usage.estimated_usd||0).toFixed(6)}`;
-  return `LLM ${amount(usage.llm_calls)}회 · ${usage.known?"사용":"확인된"} 토큰 ${amount(usage.total_tokens)}개 (입력 ${amount(usage.input_tokens)} / 출력 ${amount(usage.output_tokens)} / 캐시 입력 ${amount(usage.cached_input_tokens)}) · ${cost}${usage.cost_known?"":" · 미보고 사용량·단가 미확인 비용 별도"} ${usage.allocation?" · 초기화 묶음 전체 합계 (종목별 비용 아님)":""} · USD 기준 추정, 세금·환율·검색·도구·서버 비용 제외`;
+  const models=(usage.model_usage||[]).map(item=>`${item.model} ${amount(item.llm_calls)}회 ${item.cost_known?`US$${Number(item.estimated_usd||0).toFixed(6)}`:"비용 미확인"}`).join(" / ");
+  return `LLM ${amount(usage.llm_calls)}회 · ${usage.known?"사용":"확인된"} 토큰 ${amount(usage.total_tokens)}개 (입력 ${amount(usage.input_tokens)} / 출력 ${amount(usage.output_tokens)} / 캐시 입력 ${amount(usage.cached_input_tokens)} / 캐시 쓰기 ${usage.cache_write_known===true?amount(usage.cache_write_tokens):"미보고"}) · ${cost}${usage.cost_known?"":" · 미보고 사용량·단가 미확인 비용 별도"}${models?` · 모델별 ${models}`:""}${usage.pricing_as_of?` · 단가 확인 ${usage.pricing_as_of}`:""} ${usage.allocation?" · 초기화 묶음 전체 합계 (종목별 비용 아님)":""} · USD 기준 추정, 세금·환율·검색·도구·서버 비용 제외`;
 }
 
 function combineLLMUsage(items){
   if(!items.length)return null;
   const result={known:true,cost_known:true};
-  for(const key of ["llm_calls","total_tokens","input_tokens","output_tokens","cached_input_tokens","estimated_usd","priced_calls"])result[key]=items.reduce((sum,item)=>sum+(Number(item[key])||0),0);
-  result.known=items.every(item=>item.known);result.cost_known=items.every(item=>item.cost_known);return result;
+  for(const key of ["llm_calls","total_tokens","input_tokens","output_tokens","cached_input_tokens","cache_write_tokens","estimated_usd","priced_calls"])result[key]=items.reduce((sum,item)=>sum+(Number(item[key])||0),0);
+  const models=new Map();for(const item of items){for(const usage of item.model_usage||[]){const key=`${usage.provider}:${usage.model}`,prior=models.get(key)||{provider:usage.provider,model:usage.model,llm_calls:0,estimated_usd:0,cost_known:true};prior.llm_calls+=Number(usage.llm_calls)||0;prior.estimated_usd+=Number(usage.estimated_usd)||0;prior.cost_known=prior.cost_known&&Boolean(usage.cost_known);models.set(key,prior);}}result.model_usage=[...models.values()];
+  const dates=[...new Set(items.map(item=>item.pricing_as_of).filter(Boolean))];result.pricing_as_of=dates.length===1?dates[0]:null;
+  result.known=items.every(item=>item.known);result.cache_write_known=items.every(item=>item.cache_write_known===true);result.cost_known=items.every(item=>item.cost_known);return result;
 }
 
 // Opt-in for LLM buttons only; never intercept order/approval actions globally.
-async function llmButtonTask(button,label,valid,task){
+async function llmButtonTask(button,label,valid,task,progress=null){
   if(button.dataset.working==="true"||state.user.role==="viewer"||!valid())return;
   const ownerCurrent=llmOwnerGuard(),alive=()=>ownerCurrent()&&valid()&&button.isConnected;
-  let output=button.nextElementSibling;if(!output?.classList.contains("llm-action-status")){output=node("div",undefined,"evaluation-progress llm-action-status");button.after(output);}
+  let output=progress||button.nextElementSibling;if(!progress&&!output?.classList.contains("llm-action-status")){output=node("div",undefined,"evaluation-progress llm-action-status");button.after(output);}
+  output.hidden=false;
   const stage=node("span",label,"task-busy"),elapsed=node("span"),cost=node("span","사용량 집계 대기 · 응답 수신 후 표시","helper");output.replaceChildren(stage,elapsed,cost);output.setAttribute("role","status");output.setAttribute("aria-busy","true");
   const start=performance.now(),items=[],seen=new Set();let received=false;
   function add(item){if(!alive()||!item)return;if(item.execution_id){if(seen.has(item.execution_id))return;seen.add(item.execution_id);}items.push(item);received=true;cost.textContent=llmUsageText(combineLLMUsage(items));}

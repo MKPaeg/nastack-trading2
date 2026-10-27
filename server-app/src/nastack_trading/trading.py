@@ -275,6 +275,7 @@ def control_plan(db, user, plan_id, payload, config=None, *, stop_reason=""):
         raise HTTPException(409, "실전 자동매매 실행 설정이 없습니다.")
     if payload.action == "schedule" and not payload.time:
         raise HTTPException(422, "예약 시간을 지정하세요.")
+    runtime = automatic_runtime(db, user) if running else None
     value = {
         **row.value,
         "mode": "automatic",
@@ -297,6 +298,11 @@ def control_plan(db, user, plan_id, payload, config=None, *, stop_reason=""):
             "generation": row.value.get("auto_control", {}).get("generation", str(uuid4()))
             if was_active and running
             else str(uuid4()),
+            # Only an explicit stopped -> start approval can add to an existing position.
+            # A subsequent global pause/resume changes the runtime version and revokes it.
+            "held_entry_runtime_version": runtime["version"]
+            if running and payload.action == "start" and not was_active and not runtime["paused"]
+            else None,
         },
     }
     if payload.action == "schedule":
@@ -319,6 +325,16 @@ def control_plan(db, user, plan_id, payload, config=None, *, stop_reason=""):
     if config is not None and (running or was_active):
         notify_automatic_control(db, user, config, row, payload.action, stop_reason)
     return plan_view(row)
+
+
+def held_entry_authorized(db, user, plan):
+    """Whether this explicit start still permits its one held-position buy slot."""
+    control = plan.value.get("auto_control", {})
+    approved_version = control.get("held_entry_runtime_version")
+    if not plan.value.get("active") or control.get("action") != "start" or approved_version is None:
+        return False
+    runtime = automatic_runtime(db, user)
+    return not runtime["paused"] and runtime["version"] == approved_version
 
 
 class OrderConfirm(BaseModel):
@@ -969,8 +985,19 @@ class TradingService:
                 if not plan.value.get("buy_enabled", True):
                     raise HTTPException(409, "매수 사용이 해제되어 자동매수를 차단했습니다.")
                 current_position = self.gateway.position(db, user, plan, self.account(plan))
-                if current_position.get("environment") != "live" or current_position.get("quantity") != 0:
-                    raise HTTPException(409, "최신 잔고에 보유분이 있어 자동 추가매수를 차단했습니다.")
+                if current_position.get("environment") != "live":
+                    raise HTTPException(409, "실전 계좌의 최신 잔고를 확인할 수 없어 자동매수를 차단했습니다.")
+                if current_position.get("quantity", 0) > 0:
+                    if not held_entry_authorized(db, user, plan):
+                        raise HTTPException(409, "새 시작 승인 없이 보유종목 자동 추가매수를 차단했습니다.")
+                    basis = current_position.get("purchase_price")
+                    rate = (price / basis - 1) * 100 if basis and basis > 0 else None
+                    if stop_loss_hit(plan.value, price, rate) or (
+                        plan.value.get("take_profit_enabled", True)
+                        and rate is not None
+                        and rate >= plan.value["take_profit"]
+                    ):
+                        raise HTTPException(409, "보유종목의 익절·손절 조건이 우선하여 자동매수를 차단했습니다.")
                 if not buy_price_hit(plan.value, price):
                     raise HTTPException(409, "최신 시세가 매수 가격 조건을 충족하지 않아 주문을 차단했습니다.")
                 if plan.value.get("buy_condition", "at_or_below") == "at_or_above":
